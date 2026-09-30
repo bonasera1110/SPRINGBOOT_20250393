@@ -5,11 +5,10 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 
 import com.example.demo.model.domain.TestDB;
-import com.example.demo.model.service.Testservice;
+import com.example.demo.model.service.TestService;
 
 @Controller
 public class DemoController {
-    
     @Autowired
     TestService testService;
 

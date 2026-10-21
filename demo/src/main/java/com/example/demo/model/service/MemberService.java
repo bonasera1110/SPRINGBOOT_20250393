@@ -1,6 +1,7 @@
 package com.example.demo.model.service;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
@@ -19,10 +20,15 @@ public class MemberService implements UserDetailsService {
     private MemberRepository memberRepository;
     @Autowired // SecurityConfig 에 등록한 BCryptPasswordEncoder 주입
     private PasswordEncoder passwordEncoder;
+    private boolean isBlank(String value) { return value == null || value.isBlank(); } // 클래스 아래쪽
+
 
     private static final List<String> ROLES = List.of("USER", "ADMIN");
 
     public Member signup(MemberForm form) { // 회원가입
+        if (isBlank(form.getUsername()) || isBlank(form.getPassword()) || isBlank(form.getName())) {
+            throw new IllegalArgumentException("아이디, 비밀번호, 이름은 필수입니다.");
+        }
         if (memberRepository.existsByUsername(form.getUsername())) {
             throw new IllegalArgumentException("이미 사용 중인 아이디입니다.");
         }
@@ -60,14 +66,14 @@ return User.builder() // 시큐리티용 사용자 객체로 변환
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    public void changeRole(Long id, String role) { // 권한 변경
+    public Member changeRole(Long id, String role) { // 권한 변경
         if (!ROLES.contains(role)) { // 허용된 권한만
             throw new IllegalArgumentException("허용되지 않는 권한입니다 : " + role);
         }
         Member member = memberRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("회원이 존재하지 않습니다."));
         member.setRole(role);
-        memberRepository.save(member); // UPDATE (id 가 있으면 수정)
+        return memberRepository.save(member); // UPDATE (id 가 있으면 수정)
     }
 
     @PreAuthorize("hasRole('ADMIN')")
@@ -77,4 +83,7 @@ return User.builder() // 시큐리티용 사용자 객체로 변환
         memberRepository.delete(member); // DELETE
         }
 
+        public Optional<Member> findById(Long id) {
+            return memberRepository.findById(id);
+    }
 }

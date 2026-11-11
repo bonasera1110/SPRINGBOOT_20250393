@@ -9,7 +9,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import com.example.demo.model.domain.Member;
 import com.example.demo.model.dto.MemberForm;
+import com.example.demo.model.repository.CommentRepository;
 import com.example.demo.model.repository.MemberRepository;
+import com.example.demo.model.repository.PostRepository;
 
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.userdetails.*; // User, UserDetails 등
@@ -20,6 +22,10 @@ public class MemberService implements UserDetailsService {
     private MemberRepository memberRepository;
     @Autowired // SecurityConfig 에 등록한 BCryptPasswordEncoder 주입
     private PasswordEncoder passwordEncoder;
+    @Autowired // ① 필드 추가
+    private PostRepository postRepository;
+    @Autowired
+    private CommentRepository commentRepository;
     private boolean isBlank(String value) { return value == null || value.isBlank(); } // 클래스 아래쪽
 
 
@@ -80,6 +86,9 @@ return User.builder() // 시큐리티용 사용자 객체로 변환
     public void deleteMember(Long id) { // 회원 삭제
         Member member = memberRepository.findById(id)
             .orElseThrow(() -> new IllegalArgumentException("회원이 존재하지 않습니다."));
+            if (postRepository.existsByAuthor(member) || commentRepository.existsByAuthor(member)) {
+            throw new IllegalArgumentException("작성한 글이나 댓글이 있는 회원은 삭제할 수 없습니다.");
+            }
         memberRepository.delete(member); // DELETE
         }
 
